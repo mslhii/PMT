@@ -43,15 +43,10 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     private ParseUser mCurrentUser;
-
     private List<ParseUser> mUserFriends;
-
     private FriendListViewAdapter mFriendAdapter;
-
     private AdView mAdView;
-
     private RelativeLayout mLayout;
-
     private Comparator<ParseUser> mComparator = new UserComparator();
 
     @Override
