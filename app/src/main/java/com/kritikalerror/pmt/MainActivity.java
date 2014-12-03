@@ -1,0 +1,264 @@
+package com.kritikalerror.pmt;
+
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
+import com.kritikalerror.pmt.authenticator.AuthenticationActivity;
+import com.kritikalerror.pmt.utils.FriendListViewAdapter;
+import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.ParseAnalytics;
+import com.parse.ParseException;
+import com.parse.ParseInstallation;
+import com.parse.ParseObject;
+import com.parse.ParsePush;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+import com.parse.SaveCallback;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ * @author Michael H.
+ */
+public class MainActivity extends Activity {
+
+    private ParseUser mCurrentUser;
+
+    private List<ParseUser> mUserFriends;
+
+    private FriendListViewAdapter mFriendAdapter;
+
+    private AdView mAdView;
+
+    private RelativeLayout mLayout;
+
+    private Comparator<ParseUser> mComparator = new UserComparator();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mLayout = new RelativeLayout(this);
+        ParseAnalytics.trackAppOpened(getIntent());
+
+        loadAds();
+
+        isUserAuthenticated();
+        if (mCurrentUser != null) {
+            registerPushNotification();
+            loadFriendList();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.add_user:
+                addFriend();
+                return true;
+            case R.id.settings:
+                ParseUser.logOut();
+                isUserAuthenticated();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // If user is not authenticated, take them to the AuthenticationActivity
+    private void isUserAuthenticated() {
+        // Check if user is authenticated
+        mCurrentUser = ParseUser.getCurrentUser();
+        if (mCurrentUser == null) {
+            startActivity(new Intent(this, AuthenticationActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+            finish();
+        }
+    }
+
+    private void addFriend() {
+        final RelativeLayout container = (RelativeLayout) findViewById(R.id.add_user_container);
+        final EditText input = (EditText) findViewById(R.id.add_user_input);
+
+        if (container.isShown()) {
+            container.setVisibility(View.GONE);
+            input.setText("");
+        } else {
+            container.setVisibility(View.VISIBLE);
+        }
+
+        input.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    container.setVisibility(View.GONE);
+                    final String friend = v.getText().toString().toUpperCase();
+
+                    ParseQuery<ParseUser> query = ParseUser.getQuery();
+                    query.whereEqualTo("username", friend);
+                    query.getFirstInBackground(new GetCallback<ParseUser>() {
+                        @Override
+                        public void done(final ParseUser parseUser, ParseException e) {
+                            if (parseUser == null) {
+                                Toast.makeText(getBaseContext(),
+                                        getString(R.string.error_does_not_exist),
+                                        Toast.LENGTH_LONG).show();
+                            } else {
+                                // Save the friend relationship to Parse
+                                ParseObject query = new ParseObject("Friend");
+                                query.put("user", mCurrentUser);
+                                query.put("friend", friend);
+                                query.saveInBackground(new SaveCallback() {
+                                    @Override
+                                    public void done(ParseException e) {
+                                        if (e == null) {
+                                            mUserFriends.add(parseUser);
+                                            mFriendAdapter.notifyDataSetChanged();
+                                        } else {
+                                            Toast.makeText(getBaseContext(),
+                                                    getString(R.string.error_oops),
+                                                    Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+                return false;
+            }
+        });
+    }
+
+    private void loadFriendList() {
+        final ListView listview = (ListView) findViewById(R.id.listView);
+        listview.setOnItemClickListener(new FriendClickListener());
+        mUserFriends = new ArrayList<ParseUser>();
+        mFriendAdapter = new FriendListViewAdapter(getBaseContext(), mUserFriends);
+
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Friend");
+        query.whereEqualTo("user", mCurrentUser);
+        ParseQuery<ParseUser> userQuery = ParseUser.getQuery();
+        userQuery.whereMatchesKeyInQuery("username", "friend", query);
+        userQuery.findInBackground(new FindCallback<ParseUser>() {
+            @Override
+            public void done(List<ParseUser> parseUsers, ParseException e) {
+                if (parseUsers == null) {
+                    Toast.makeText(getBaseContext(), getString(R.string.error_oops),
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    mUserFriends = parseUsers;
+                    Collections.sort(mUserFriends, mComparator);
+                    mFriendAdapter = new FriendListViewAdapter(getBaseContext(), mUserFriends);
+                    listview.setAdapter(mFriendAdapter);
+                    mFriendAdapter.notifyDataSetChanged();
+                }
+            }
+        });
+    }
+
+    // Associate the device with a user
+    public void registerPushNotification() {
+        ParseInstallation installation = ParseInstallation.getCurrentInstallation();
+        installation.put("user", mCurrentUser);
+        installation.saveInBackground();
+    }
+
+    /**
+     * Load Ads in MainActivity screen
+     * Don't want to load them first in Launcher,
+     */
+    private void loadAds()
+    {
+        /*
+        // Create and setup the AdMob view
+        mAdView = new AdView(this);
+        FrameLayout layout = (FrameLayout) findViewById(R.id.map);
+        mAdView.setAdSize(AdSize.SMART_BANNER);
+        mAdView.setAdUnitId("ca-app-pub-6309606968767978/6485120847");
+        AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
+        // Get the height for offset calculations
+        AdSize adSize = mAdView.getAdSize();
+        //mAdHeight = adSize.getHeight();
+        mAdHeight = adSize.getHeightInPixels(getApplicationContext());
+        // Add the AdMob view
+        FrameLayout.LayoutParams adParams =
+                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT);
+        layout.addView(mAdView, adParams);
+        mAdView.loadAd(adRequestBuilder.build());
+        */
+
+        // Create and setup the AdMob view
+        mAdView = new AdView(this);
+        mAdView.setAdSize(AdSize.SMART_BANNER);
+        mAdView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
+        AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
+
+        RelativeLayout.LayoutParams adParams =
+                new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        adParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        adParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+        mLayout.addView(mAdView, adParams);
+
+        mAdView.loadAd(adRequestBuilder.build());
+    }
+
+
+    public class UserComparator implements Comparator<ParseUser> {
+        @Override
+        public int compare(ParseUser arg0, ParseUser arg1) {
+            return arg0.getUsername().compareToIgnoreCase(arg1.getUsername());
+        }
+    }
+
+
+    // Listener for ListView item clicks
+    private class FriendClickListener implements AdapterView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            // Create our Installation query
+            ParseQuery pushQuery = ParseInstallation.getQuery();
+            pushQuery.whereEqualTo("user", mUserFriends.get(position));
+
+            // Send push notification to query
+            ParsePush push = new ParsePush();
+            push.setQuery(pushQuery); // Set our Installation query
+            push.setMessage(mCurrentUser.getUsername() + " wants PMT");
+            push.sendInBackground();
+
+            Toast.makeText(MainActivity.this, "Sent a PMT", Toast.LENGTH_SHORT).show();
+        }
+    }
+}
