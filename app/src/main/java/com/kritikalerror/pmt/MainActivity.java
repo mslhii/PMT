@@ -56,12 +56,12 @@ public class MainActivity extends Activity {
         mLayout = new RelativeLayout(this);
         ParseAnalytics.trackAppOpened(getIntent());
 
-        loadAds();
-
         isUserAuthenticated();
         if (mCurrentUser != null) {
             registerPushNotification();
             loadFriendList();
+
+            loadAds();
         }
     }
 
@@ -105,7 +105,6 @@ public class MainActivity extends Activity {
 
         if (container.isShown()) {
             container.setVisibility(View.GONE);
-            input.setText("");
         } else {
             container.setVisibility(View.VISIBLE);
         }
@@ -115,6 +114,9 @@ public class MainActivity extends Activity {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     container.setVisibility(View.GONE);
+
+                    // Clear the editor when finished
+                    v.setText("");
                     final String friend = v.getText().toString().toUpperCase();
 
                     ParseQuery<ParseUser> query = ParseUser.getQuery();
