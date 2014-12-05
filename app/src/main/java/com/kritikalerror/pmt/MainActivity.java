@@ -17,6 +17,8 @@ import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -50,14 +52,16 @@ public class MainActivity extends Activity {
     private Comparator<ParseUser> mComparator = new UserComparator();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mLayout = new RelativeLayout(this);
         ParseAnalytics.trackAppOpened(getIntent());
 
         isUserAuthenticated();
-        if (mCurrentUser != null) {
+        if (mCurrentUser != null)
+        {
             registerPushNotification();
             loadFriendList();
 
@@ -66,14 +70,16 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.add_user:
@@ -89,7 +95,8 @@ public class MainActivity extends Activity {
     }
 
     // If user is not authenticated, take them to the AuthenticationActivity
-    private void isUserAuthenticated() {
+    private void isUserAuthenticated()
+    {
         // Check if user is authenticated
         mCurrentUser = ParseUser.getCurrentUser();
         if (mCurrentUser == null) {
@@ -99,13 +106,17 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void addFriend() {
+    private void addFriend()
+    {
         final RelativeLayout container = (RelativeLayout) findViewById(R.id.add_user_container);
         final EditText input = (EditText) findViewById(R.id.add_user_input);
 
-        if (container.isShown()) {
+        if (container.isShown())
+        {
             container.setVisibility(View.GONE);
-        } else {
+        }
+        else
+        {
             container.setVisibility(View.VISIBLE);
         }
 
@@ -155,9 +166,83 @@ public class MainActivity extends Activity {
         });
     }
 
-    private void loadFriendList() {
+    private void deleteFriend(final String name)
+    {
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo("friend", name);
+        query.getFirstInBackground(new GetCallback<ParseUser>() {
+            @Override
+            public void done(final ParseUser parseUser, ParseException e) {
+                if (parseUser == null) {
+                    Toast.makeText(getBaseContext(),
+                            getString(R.string.error_does_not_exist),
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    // Save the friend relationship to Parse
+                    parseUser.deleteInBackground();
+                    if (e == null) {
+                        mUserFriends.remove(parseUser);
+                        mFriendAdapter.notifyDataSetChanged();
+                    } else {
+                        Toast.makeText(getBaseContext(),
+                                getString(R.string.error_oops),
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
+    }
+
+    private void loadFriendList()
+    {
         final ListView listview = (ListView) findViewById(R.id.listView);
-        listview.setOnItemClickListener(new FriendClickListener());
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+            {
+                // Create our Installation query
+                ParseQuery pushQuery = ParseInstallation.getQuery();
+                pushQuery.whereEqualTo("user", mUserFriends.get(position));
+
+                // Send push notification to query
+                ParsePush push = new ParsePush();
+                push.setQuery(pushQuery); // Set our Installation query
+                push.setMessage(mCurrentUser.getUsername() + " wants PMT");
+                push.sendInBackground();
+
+                Toast.makeText(MainActivity.this, "Sent a PMT", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                // TODO Auto-generated method stub
+                final ParseUser selectedUser = (ParseUser) parent.getItemAtPosition(position);
+
+                final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Options")
+                        .setItems(new CharSequence[]{"Delete"},
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        switch (which) {
+                                            case 0:
+                                                deleteFriend(selectedUser.getUsername());
+
+                                                Toast.makeText(MainActivity.this, "Deleted " + selectedUser.getUsername(), Toast.LENGTH_SHORT).show();
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+
+                return false;
+            }
+        });
+
         mUserFriends = new ArrayList<ParseUser>();
         mFriendAdapter = new FriendListViewAdapter(getBaseContext(), mUserFriends);
 
@@ -232,30 +317,12 @@ public class MainActivity extends Activity {
     }
 
 
-    public class UserComparator implements Comparator<ParseUser> {
+    public class UserComparator implements Comparator<ParseUser>
+    {
         @Override
-        public int compare(ParseUser arg0, ParseUser arg1) {
+        public int compare(ParseUser arg0, ParseUser arg1)
+        {
             return arg0.getUsername().compareToIgnoreCase(arg1.getUsername());
-        }
-    }
-
-
-    // Listener for ListView item clicks
-    private class FriendClickListener implements AdapterView.OnItemClickListener {
-
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            // Create our Installation query
-            ParseQuery pushQuery = ParseInstallation.getQuery();
-            pushQuery.whereEqualTo("user", mUserFriends.get(position));
-
-            // Send push notification to query
-            ParsePush push = new ParsePush();
-            push.setQuery(pushQuery); // Set our Installation query
-            push.setMessage(mCurrentUser.getUsername() + " wants PMT");
-            push.sendInBackground();
-
-            Toast.makeText(MainActivity.this, "Sent a PMT", Toast.LENGTH_SHORT).show();
         }
     }
 }
