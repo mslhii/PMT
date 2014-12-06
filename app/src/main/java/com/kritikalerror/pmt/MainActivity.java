@@ -21,6 +21,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -126,8 +127,6 @@ public class MainActivity extends Activity {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     container.setVisibility(View.GONE);
 
-                    // Clear the editor when finished
-                    v.setText("");
                     final String friend = v.getText().toString().toUpperCase();
 
                     ParseQuery<ParseUser> query = ParseUser.getQuery();
@@ -160,33 +159,56 @@ public class MainActivity extends Activity {
                             }
                         }
                     });
+
+                    // Clear the editor when finished
+                    v.setText("");
                 }
                 return false;
             }
         });
     }
 
-    private void deleteFriend(final String name)
+    private void deleteFriend(final ParseUser name)
     {
-        ParseQuery<ParseUser> query = ParseUser.getQuery();
-        query.whereEqualTo("friend", name);
-        query.getFirstInBackground(new GetCallback<ParseUser>() {
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Friend");
+        query.whereEqualTo("friend", name.getUsername());
+        query.findInBackground(new FindCallback<ParseObject>() {
             @Override
-            public void done(final ParseUser parseUser, ParseException e) {
-                if (parseUser == null) {
+            public void done(List<ParseObject> results, ParseException e) {
+                if (results == null) {
                     Toast.makeText(getBaseContext(),
                             getString(R.string.error_does_not_exist),
                             Toast.LENGTH_LONG).show();
                 } else {
-                    // Save the friend relationship to Parse
-                    parseUser.deleteInBackground();
-                    if (e == null) {
-                        mUserFriends.remove(parseUser);
-                        mFriendAdapter.notifyDataSetChanged();
-                    } else {
-                        Toast.makeText(getBaseContext(),
-                                getString(R.string.error_oops),
-                                Toast.LENGTH_LONG).show();
+                    // Find user to be deleted
+                    for (ParseObject user : results) {
+                        ParseUser tempUser = (ParseUser) user.get("user");
+                        try {
+                            tempUser = tempUser.fetchIfNeeded();
+                        } catch (ParseException e1) {
+                            e1.printStackTrace();
+                        }
+
+                        if ((tempUser.getUsername().equals(mCurrentUser.getUsername())) &&
+                                (tempUser.getUsername().equals(name.getUsername()))) {
+
+                            user.deleteInBackground();
+                            if (e == null) {
+                                mUserFriends.remove(name);
+                                mFriendAdapter.notifyDataSetChanged();
+                            } else {
+                                Toast.makeText(getBaseContext(),
+                                        getString(R.string.error_oops),
+                                        Toast.LENGTH_LONG).show();
+                            }
+
+                            Log.e("PMT", "deleted user is: " + tempUser.getUsername());
+                        }
+                        else
+                        {
+                            Log.e("PMT", "cannot find: " + tempUser.getUsername()
+                                    + " and " + mCurrentUser.getUsername());
+                        }
                     }
                 }
             }
@@ -215,7 +237,6 @@ public class MainActivity extends Activity {
         });
 
         listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 // TODO Auto-generated method stub
                 final ParseUser selectedUser = (ParseUser) parent.getItemAtPosition(position);
@@ -227,7 +248,7 @@ public class MainActivity extends Activity {
                                     public void onClick(DialogInterface dialog, int which) {
                                         switch (which) {
                                             case 0:
-                                                deleteFriend(selectedUser.getUsername());
+                                                deleteFriend(selectedUser);
 
                                                 Toast.makeText(MainActivity.this, "Deleted " + selectedUser.getUsername(), Toast.LENGTH_SHORT).show();
                                                 break;
