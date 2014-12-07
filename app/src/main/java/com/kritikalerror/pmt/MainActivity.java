@@ -18,8 +18,10 @@ import com.parse.SaveCallback;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -38,7 +40,9 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Michael H.
@@ -51,6 +55,8 @@ public class MainActivity extends Activity {
     private AdView mAdView;
     private RelativeLayout mLayout;
     private Comparator<ParseUser> mComparator = new UserComparator();
+    private SharedPreferences mSharedPreferences;
+    private Map<String, String> mGroupMap = new HashMap<String, String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -83,6 +89,9 @@ public class MainActivity extends Activity {
     {
         // Handle item selection
         switch (item.getItemId()) {
+            case R.id.add_group:
+                pmtGroup();
+                return true;
             case R.id.add_user:
                 addFriend();
                 return true;
@@ -105,6 +114,83 @@ public class MainActivity extends Activity {
                     .addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_CLEAR_TASK));
             finish();
         }
+    }
+
+    private void pmtGroup()
+    {
+        final ArrayList<String> pmtSend = new ArrayList<String>();
+        int friendsLength = mUserFriends.size();
+        final CharSequence[] items = new CharSequence[friendsLength];
+        final boolean[] itemsChecked = new boolean[items.length];
+        Log.e("PMT", "length is " + items.length);
+        Log.e("PMT", "checked is " + itemsChecked.length);
+        for (int i = 0; i < friendsLength; i++)
+        {
+            Log.e("PMT", "i is " + i);
+            items[i] = mUserFriends.get(i).getUsername();
+        }
+
+        //TODO: initializing all to false for now, discard later
+        for (int j = 0; j < itemsChecked.length; j++)
+        {
+            itemsChecked[j] = false;
+        }
+
+        mSharedPreferences = getSharedPreferences("PMTGroupList", Context.MODE_PRIVATE);
+        SharedPreferences.Editor keyValuesEditor = mSharedPreferences.edit();
+
+        // Transfer current friend list to group list
+        for (ParseUser friendObject : mUserFriends)
+        {
+            //mGroupMap.put(friendObject.getUsername(), "false");
+            if (!mSharedPreferences.contains(friendObject.getUsername()))
+            {
+                keyValuesEditor.putBoolean(friendObject.getUsername(), false);
+            }
+        }
+        keyValuesEditor.commit();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Send Group PMT");
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                for (int i = 0; i < items.length; i++) {
+                    if (itemsChecked[i]) {
+                        // Create our Installation query
+                        ParseQuery pushQuery = ParseInstallation.getQuery();
+                        pushQuery.whereEqualTo("user", mUserFriends.get(i));
+
+                        // Send push notification to query
+                        ParsePush push = new ParsePush();
+                        push.setQuery(pushQuery); // Set our Installation query
+                        push.setMessage(mCurrentUser.getUsername() + " wants PMT");
+                        push.sendInBackground();
+
+                        Toast.makeText(MainActivity.this, "Sent the group a PMT", Toast.LENGTH_SHORT).show();
+
+                        itemsChecked[i] = false;
+                    }
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.setMultiChoiceItems(items,
+                itemsChecked,
+                new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                itemsChecked[which] = isChecked;
+            }
+        });
+        builder.show();
     }
 
     private void addFriend()
