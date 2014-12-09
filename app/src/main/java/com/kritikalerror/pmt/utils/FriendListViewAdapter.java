@@ -22,16 +22,21 @@ public class FriendListViewAdapter extends BaseAdapter {
     private static LayoutInflater mLayoutInflater;
     private List<ParseUser> mParseUsers;
 
-    private final int[] colorPicker = {Color.BLACK,
-            Color.BLUE,
-            Color.CYAN,
+    private static final int[] colorPicker = {Color.parseColor("#9933CC"),
+            Color.parseColor("#669900"),
+            Color.parseColor("#0099CC"),
             Color.DKGRAY,
-            Color.GRAY,
-            Color.GREEN,
-            Color.LTGRAY,
-            Color.MAGENTA,
-            Color.RED,
-            Color.YELLOW};
+            Color.parseColor("#FF8800"),
+            Color.parseColor("#CC0000"),
+            Color.parseColor("#FFDE82")};
+
+    private static boolean[] colorUsage = {false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false};
 
     public FriendListViewAdapter(Context ctx, List<ParseUser> parseUsers) {
         mLayoutInflater = LayoutInflater.from(ctx);
@@ -67,7 +72,8 @@ public class FriendListViewAdapter extends BaseAdapter {
             convertView.setTag(holder);
 
             // Generate some nice backgrounds per user
-            convertView.setBackgroundColor(colorPicker[randInt(0, 9)]);
+            //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
+            convertView.setBackgroundColor(determineColor());
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
@@ -90,8 +96,25 @@ public class FriendListViewAdapter extends BaseAdapter {
         return randomNum;
     }
 
-    public static class ViewHolder {
+    public static int determineColor()
+    {
+        for (int i = 0; i < colorUsage.length; i++)
+        {
+            if (!colorUsage[i])
+            {
+                colorUsage[i] = true;
+                return colorPicker[i];
+            }
+        }
 
+        for (int j = 1; j < colorUsage.length; j++)
+        {
+            colorUsage[j] = false;
+        }
+        return colorPicker[0];
+    }
+
+    public static class ViewHolder {
         public TextView username;
     }
 
