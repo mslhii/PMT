@@ -71,8 +71,6 @@ public class MainActivity extends Activity {
         {
             registerPushNotification();
             loadFriendList();
-
-            loadAds();
         }
     }
 
@@ -366,6 +364,16 @@ public class MainActivity extends Activity {
                 } else {
                     mUserFriends = parseUsers;
                     Collections.sort(mUserFriends, mComparator);
+
+                    int curSize = mUserFriends.size() - 1;
+                    for (int i = 0; i < curSize; i++)
+                    {
+                        if ((i % 7) == 0)
+                        {
+                            mUserFriends.add(i, null);
+                        }
+                    }
+
                     mFriendAdapter = new FriendListViewAdapter(getBaseContext(), mUserFriends);
                     listview.setAdapter(mFriendAdapter);
                     mFriendAdapter.notifyDataSetChanged();
@@ -379,48 +387,6 @@ public class MainActivity extends Activity {
         ParseInstallation installation = ParseInstallation.getCurrentInstallation();
         installation.put("user", mCurrentUser);
         installation.saveInBackground();
-    }
-
-    /**
-     * Load Ads in MainActivity screen
-     * Don't want to load them first in Launcher,
-     */
-    private void loadAds()
-    {
-        /*
-        // Create and setup the AdMob view
-        mAdView = new AdView(this);
-        FrameLayout layout = (FrameLayout) findViewById(R.id.map);
-        mAdView.setAdSize(AdSize.SMART_BANNER);
-        mAdView.setAdUnitId("ca-app-pub-6309606968767978/6485120847");
-        AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
-        // Get the height for offset calculations
-        AdSize adSize = mAdView.getAdSize();
-        //mAdHeight = adSize.getHeight();
-        mAdHeight = adSize.getHeightInPixels(getApplicationContext());
-        // Add the AdMob view
-        FrameLayout.LayoutParams adParams =
-                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT);
-        layout.addView(mAdView, adParams);
-        mAdView.loadAd(adRequestBuilder.build());
-        */
-
-        // Create and setup the AdMob view
-        mAdView = new AdView(this);
-        mAdView.setAdSize(AdSize.SMART_BANNER);
-        mAdView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
-        AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
-
-        RelativeLayout.LayoutParams adParams =
-                new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-        adParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        adParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-
-        mLayout.addView(mAdView, adParams);
-
-        mAdView.loadAd(adRequestBuilder.build());
     }
 
 

@@ -1,5 +1,8 @@
 package com.kritikalerror.pmt.utils;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
 import com.kritikalerror.pmt.R;
 import com.parse.ParseUser;
 
@@ -8,6 +11,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
@@ -38,9 +42,16 @@ public class FriendListViewAdapter extends BaseAdapter {
             false,
             false};
 
+    private Context context;
+    private int mLength;
+
+    private static final String ADMOB_PUBLISHER_ID = "ca-app-pub-6309606968767978/2177105243";
+
     public FriendListViewAdapter(Context ctx, List<ParseUser> parseUsers) {
-        mLayoutInflater = LayoutInflater.from(ctx);
-        mParseUsers = parseUsers;
+        this.context = ctx;
+        this.mLength = parseUsers.size();
+        this.mLayoutInflater = LayoutInflater.from(ctx);
+        this.mParseUsers = parseUsers;
     }
 
     @Override
@@ -63,24 +74,47 @@ public class FriendListViewAdapter extends BaseAdapter {
         ViewHolder holder;
         ParseUser friend = (ParseUser) getItem(position);
 
-        if (convertView == null) {
-            convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
+        if (friend == null) {
+            AdView adView = new AdView(this.context);
+            adView.setAdSize(AdSize.BANNER);
+            adView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
+            AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
 
-            holder = new ViewHolder();
-            holder.username = (TextView) convertView.findViewById(R.id.friend_username);
+            for (int i = 0; i < adView.getChildCount(); i++) {
+                adView.getChildAt(i).setFocusable(false);
+            }
 
-            convertView.setTag(holder);
+            adView.setFocusable(false);
 
-            // Generate some nice backgrounds per user
-            //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
-            convertView.setBackgroundColor(determineColor());
-        } else {
-            holder = (ViewHolder) convertView.getTag();
+            float density = this.context.getResources().getDisplayMetrics().density;
+            int height = Math.round(AdSize.BANNER.getHeight() * density);
+            AbsListView.LayoutParams params
+                    = new AbsListView.LayoutParams(AbsListView.LayoutParams.FILL_PARENT,
+                    height);
+            adView.setLayoutParams(params);
+            adView.loadAd(adRequestBuilder.build());
+            return adView;
         }
+        else {
+            if (convertView == null) {
+                convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
 
-        holder.username.setText(friend.getUsername());
+                holder = new ViewHolder();
+                holder.username = (TextView) convertView.findViewById(R.id.friend_username);
 
-        return convertView;
+                convertView.setTag(holder);
+
+                // Generate some nice backgrounds per user
+                //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
+                convertView.setBackgroundColor(determineColor());
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+
+            holder.username.setText(friend.getUsername());
+
+            return convertView;
+        }
     }
 
     public static int randInt(int min, int max) {
