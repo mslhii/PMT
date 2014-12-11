@@ -80,21 +80,6 @@ public class MainActivity extends Activity {
         // Begin loading your interstitial.
         interstitial.loadAd(adRequest);
 
-
-        /*
-        AdView adView = new AdView(this);
-        adView.setAdSize(AdSize.BANNER);
-        adView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
-        AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
-
-        adView.setFocusable(false);
-        ViewGroup.LayoutParams params
-                = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        adView.setLayoutParams(params);
-        adView.loadAd(adRequestBuilder.build());
-        */
-
         isUserAuthenticated();
         if (mCurrentUser != null)
         {
@@ -297,6 +282,7 @@ public class MainActivity extends Activity {
                     // Find user to be deleted
                     for (ParseObject user : results) {
                         ParseUser tempUser = (ParseUser) user.get("user");
+                        String delUser = (String) user.get("friend");
                         try {
                             tempUser = tempUser.fetchIfNeeded();
                         } catch (ParseException e1) {
@@ -304,7 +290,7 @@ public class MainActivity extends Activity {
                         }
 
                         if ((tempUser.getUsername().equals(mCurrentUser.getUsername())) &&
-                                (tempUser.getUsername().equals(name.getUsername()))) {
+                                (delUser.equals(name.getUsername()))) {
 
                             user.deleteInBackground();
                             if (e == null) {
@@ -379,12 +365,6 @@ public class MainActivity extends Activity {
         });
 
         mUserFriends = new ArrayList<ParseUser>();
-        /*
-        ParseUser newAdUser = new ParseUser();
-        newAdUser.setUsername("ADGOESHERE");
-        newAdUser.setEmail("ADGOESHERE");
-        mUserFriends.add(newAdUser);
-        */
         mFriendAdapter = new FriendListViewAdapter(getBaseContext(), mUserFriends);
 
         ParseQuery<ParseObject> query = ParseQuery.getQuery("Friend");
@@ -399,29 +379,7 @@ public class MainActivity extends Activity {
                             Toast.LENGTH_LONG).show();
                 } else {
                     mUserFriends = parseUsers;
-                    /*
-                    for (ParseUser user : parseUsers)
-                    {
-                        mUserFriends.add(user);
-                    }
-                    */
                     Collections.sort(mUserFriends, mComparator);
-
-                    // Set ad positions
-                    /*
-                    int curSize = mUserFriends.size() - 1;
-                    ParseUser adParseUser = new ParseUser();
-                    adParseUser.setUsername("ADGOESHERE");
-                    adParseUser.setEmail("ADGOESHERE");
-                    adParseUser.setPassword("ADGOESHERE");
-                    for (int i = 0; i < curSize; i++)
-                    {
-                        if ((i % 7) == 0)
-                        {
-                            mUserFriends.add(i, adParseUser);
-                        }
-                    }
-                    */
 
                     mFriendAdapter = new FriendListViewAdapter(getBaseContext(), mUserFriends);
                     listview.setAdapter(mFriendAdapter);

@@ -152,22 +152,6 @@ public class FriendListViewAdapter extends BaseAdapter {
         } else {
             holder = (ViewHolder) convertView.getTag();
             Log.e("PMTFA", "crashes in else");
-            /*
-            if (holder == null)
-            {
-                convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
-
-                holder = new ViewHolder();
-                holder.username = (TextView) convertView.findViewById(R.id.friend_username);
-
-                convertView.setTag(holder);
-
-                // Generate some nice backgrounds per user
-                //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
-                convertView.setBackgroundColor(determineColor());
-                Log.e("PMTFA", "crashes in convertview2");
-            }
-            */
         }
 
         holder.username.setText(friend.getUsername());
