@@ -3,6 +3,7 @@ package com.kritikalerror.pmt;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
 import com.kritikalerror.pmt.authenticator.AuthenticationActivity;
 import com.kritikalerror.pmt.utils.FriendListViewAdapter;
 import com.parse.FindCallback;
@@ -29,6 +30,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -58,6 +60,8 @@ public class MainActivity extends Activity {
     private SharedPreferences mSharedPreferences;
     private Map<String, String> mGroupMap = new HashMap<String, String>();
 
+    private InterstitialAd interstitial;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -66,10 +70,36 @@ public class MainActivity extends Activity {
         mLayout = new RelativeLayout(this);
         ParseAnalytics.trackAppOpened(getIntent());
 
+        // Create the interstitial.
+        interstitial = new InterstitialAd(this);
+        interstitial.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
+
+        // Create ad request.
+        AdRequest adRequest = new AdRequest.Builder().build();
+
+        // Begin loading your interstitial.
+        interstitial.loadAd(adRequest);
+
+
+        /*
+        AdView adView = new AdView(this);
+        adView.setAdSize(AdSize.BANNER);
+        adView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
+        AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
+
+        adView.setFocusable(false);
+        ViewGroup.LayoutParams params
+                = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        adView.setLayoutParams(params);
+        adView.loadAd(adRequestBuilder.build());
+        */
+
         isUserAuthenticated();
         if (mCurrentUser != null)
         {
             registerPushNotification();
+            displayInterstitial();
             loadFriendList();
         }
     }
@@ -349,6 +379,12 @@ public class MainActivity extends Activity {
         });
 
         mUserFriends = new ArrayList<ParseUser>();
+        /*
+        ParseUser newAdUser = new ParseUser();
+        newAdUser.setUsername("ADGOESHERE");
+        newAdUser.setEmail("ADGOESHERE");
+        mUserFriends.add(newAdUser);
+        */
         mFriendAdapter = new FriendListViewAdapter(getBaseContext(), mUserFriends);
 
         ParseQuery<ParseObject> query = ParseQuery.getQuery("Friend");
@@ -363,16 +399,29 @@ public class MainActivity extends Activity {
                             Toast.LENGTH_LONG).show();
                 } else {
                     mUserFriends = parseUsers;
+                    /*
+                    for (ParseUser user : parseUsers)
+                    {
+                        mUserFriends.add(user);
+                    }
+                    */
                     Collections.sort(mUserFriends, mComparator);
 
+                    // Set ad positions
+                    /*
                     int curSize = mUserFriends.size() - 1;
+                    ParseUser adParseUser = new ParseUser();
+                    adParseUser.setUsername("ADGOESHERE");
+                    adParseUser.setEmail("ADGOESHERE");
+                    adParseUser.setPassword("ADGOESHERE");
                     for (int i = 0; i < curSize; i++)
                     {
                         if ((i % 7) == 0)
                         {
-                            mUserFriends.add(i, null);
+                            mUserFriends.add(i, adParseUser);
                         }
                     }
+                    */
 
                     mFriendAdapter = new FriendListViewAdapter(getBaseContext(), mUserFriends);
                     listview.setAdapter(mFriendAdapter);
@@ -388,6 +437,15 @@ public class MainActivity extends Activity {
         installation.put("user", mCurrentUser);
         installation.saveInBackground();
     }
+
+    // Invoke displayInterstitial() when you are ready to display an interstitial.
+    public void displayInterstitial() {
+        if (interstitial.isLoaded()) {
+            interstitial.show();
+        }
+    }
+
+
 
 
     public class UserComparator implements Comparator<ParseUser>

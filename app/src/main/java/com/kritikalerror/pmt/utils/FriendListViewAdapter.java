@@ -8,6 +8,7 @@ import com.parse.ParseUser;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,7 +75,10 @@ public class FriendListViewAdapter extends BaseAdapter {
         ViewHolder holder;
         ParseUser friend = (ParseUser) getItem(position);
 
-        if (friend == null) {
+        Log.e("PMTFA", "position is: " + position);
+        /*
+        if (friend.getUsername().contains("ADGOESHERE") &&
+                friend.getEmail().contains("ADGOESHERE")) {
             AdView adView = new AdView(this.context);
             adView.setAdSize(AdSize.BANNER);
             adView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
@@ -107,14 +111,68 @@ public class FriendListViewAdapter extends BaseAdapter {
                 // Generate some nice backgrounds per user
                 //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
                 convertView.setBackgroundColor(determineColor());
+                Log.e("PMTFA", "crashes in convertview");
             } else {
                 holder = (ViewHolder) convertView.getTag();
+                Log.e("PMTFA", "crashes in else");
+
+                if (holder == null)
+                {
+                    convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
+
+                    holder = new ViewHolder();
+                    holder.username = (TextView) convertView.findViewById(R.id.friend_username);
+
+                    convertView.setTag(holder);
+
+                    // Generate some nice backgrounds per user
+                    //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
+                    convertView.setBackgroundColor(determineColor());
+                    Log.e("PMTFA", "crashes in convertview2");
+                }
             }
 
             holder.username.setText(friend.getUsername());
 
             return convertView;
         }
+        */
+        if (convertView == null) {
+            convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
+
+            holder = new ViewHolder();
+            holder.username = (TextView) convertView.findViewById(R.id.friend_username);
+
+            convertView.setTag(holder);
+
+            // Generate some nice backgrounds per user
+            //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
+            convertView.setBackgroundColor(determineColor());
+            Log.e("PMTFA", "crashes in convertview");
+        } else {
+            holder = (ViewHolder) convertView.getTag();
+            Log.e("PMTFA", "crashes in else");
+            /*
+            if (holder == null)
+            {
+                convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
+
+                holder = new ViewHolder();
+                holder.username = (TextView) convertView.findViewById(R.id.friend_username);
+
+                convertView.setTag(holder);
+
+                // Generate some nice backgrounds per user
+                //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
+                convertView.setBackgroundColor(determineColor());
+                Log.e("PMTFA", "crashes in convertview2");
+            }
+            */
+        }
+
+        holder.username.setText(friend.getUsername());
+
+        return convertView;
     }
 
     public static int randInt(int min, int max) {
