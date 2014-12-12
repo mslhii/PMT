@@ -60,8 +60,6 @@ public class MainActivity extends Activity {
     private SharedPreferences mSharedPreferences;
     private Map<String, String> mGroupMap = new HashMap<String, String>();
 
-    private InterstitialAd interstitial;
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -70,21 +68,10 @@ public class MainActivity extends Activity {
         mLayout = new RelativeLayout(this);
         ParseAnalytics.trackAppOpened(getIntent());
 
-        // Create the interstitial.
-        interstitial = new InterstitialAd(this);
-        interstitial.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
-
-        // Create ad request.
-        AdRequest adRequest = new AdRequest.Builder().build();
-
-        // Begin loading your interstitial.
-        interstitial.loadAd(adRequest);
-
         isUserAuthenticated();
         if (mCurrentUser != null)
         {
             registerPushNotification();
-            displayInterstitial();
             loadFriendList();
         }
     }
@@ -395,15 +382,6 @@ public class MainActivity extends Activity {
         installation.put("user", mCurrentUser);
         installation.saveInBackground();
     }
-
-    // Invoke displayInterstitial() when you are ready to display an interstitial.
-    public void displayInterstitial() {
-        if (interstitial.isLoaded()) {
-            interstitial.show();
-        }
-    }
-
-
 
 
     public class UserComparator implements Comparator<ParseUser>

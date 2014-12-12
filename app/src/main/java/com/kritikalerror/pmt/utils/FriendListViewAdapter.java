@@ -49,6 +49,8 @@ public class FriendListViewAdapter extends BaseAdapter {
     private static final String ADMOB_PUBLISHER_ID = "ca-app-pub-6309606968767978/2177105243";
 
     public FriendListViewAdapter(Context ctx, List<ParseUser> parseUsers) {
+        parseUsers.add(0, null);
+
         this.context = ctx;
         this.mLength = parseUsers.size();
         this.mLayoutInflater = LayoutInflater.from(ctx);
@@ -76,31 +78,32 @@ public class FriendListViewAdapter extends BaseAdapter {
         ParseUser friend = (ParseUser) getItem(position);
 
         Log.e("PMTFA", "position is: " + position);
-        /*
-        if (friend.getUsername().contains("ADGOESHERE") &&
-                friend.getEmail().contains("ADGOESHERE")) {
-            AdView adView = new AdView(this.context);
-            adView.setAdSize(AdSize.BANNER);
-            adView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
-            AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
+        if (position == 0) {
+            if (convertView == null || !(convertView instanceof AdView)) {
+                AdView adView = new AdView(this.context);
+                adView.setAdSize(AdSize.BANNER);
+                adView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
+                AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
 
-            for (int i = 0; i < adView.getChildCount(); i++) {
-                adView.getChildAt(i).setFocusable(false);
+                for (int i = 0; i < adView.getChildCount(); i++) {
+                    adView.getChildAt(i).setFocusable(false);
+                }
+
+                adView.setFocusable(false);
+
+                float density = this.context.getResources().getDisplayMetrics().density;
+                int height = Math.round(AdSize.BANNER.getHeight() * density);
+                AbsListView.LayoutParams params
+                        = new AbsListView.LayoutParams(AbsListView.LayoutParams.FILL_PARENT,
+                        height);
+                adView.setLayoutParams(params);
+                adView.loadAd(adRequestBuilder.build());
+
+                convertView = adView;
             }
-
-            adView.setFocusable(false);
-
-            float density = this.context.getResources().getDisplayMetrics().density;
-            int height = Math.round(AdSize.BANNER.getHeight() * density);
-            AbsListView.LayoutParams params
-                    = new AbsListView.LayoutParams(AbsListView.LayoutParams.FILL_PARENT,
-                    height);
-            adView.setLayoutParams(params);
-            adView.loadAd(adRequestBuilder.build());
-            return adView;
         }
         else {
-            if (convertView == null) {
+            if (convertView == null || convertView instanceof AdView) {
                 convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
 
                 holder = new ViewHolder();
@@ -115,46 +118,10 @@ public class FriendListViewAdapter extends BaseAdapter {
             } else {
                 holder = (ViewHolder) convertView.getTag();
                 Log.e("PMTFA", "crashes in else");
-
-                if (holder == null)
-                {
-                    convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
-
-                    holder = new ViewHolder();
-                    holder.username = (TextView) convertView.findViewById(R.id.friend_username);
-
-                    convertView.setTag(holder);
-
-                    // Generate some nice backgrounds per user
-                    //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
-                    convertView.setBackgroundColor(determineColor());
-                    Log.e("PMTFA", "crashes in convertview2");
-                }
             }
 
             holder.username.setText(friend.getUsername());
-
-            return convertView;
         }
-        */
-        if (convertView == null) {
-            convertView = mLayoutInflater.inflate(R.layout.list_item_friend, parent, false);
-
-            holder = new ViewHolder();
-            holder.username = (TextView) convertView.findViewById(R.id.friend_username);
-
-            convertView.setTag(holder);
-
-            // Generate some nice backgrounds per user
-            //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
-            convertView.setBackgroundColor(determineColor());
-            Log.e("PMTFA", "crashes in convertview");
-        } else {
-            holder = (ViewHolder) convertView.getTag();
-            Log.e("PMTFA", "crashes in else");
-        }
-
-        holder.username.setText(friend.getUsername());
 
         return convertView;
     }
