@@ -16,6 +16,7 @@ import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -49,12 +50,12 @@ public class FriendListViewAdapter extends BaseAdapter {
     private static final String ADMOB_PUBLISHER_ID = "ca-app-pub-6309606968767978/2177105243";
 
     public FriendListViewAdapter(Context ctx, List<ParseUser> parseUsers) {
-        parseUsers.add(0, null);
-
         this.context = ctx;
         this.mLength = parseUsers.size();
         this.mLayoutInflater = LayoutInflater.from(ctx);
         this.mParseUsers = parseUsers;
+
+        this.mParseUsers.add(0, null);
     }
 
     @Override

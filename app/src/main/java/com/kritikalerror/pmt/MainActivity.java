@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
         Log.e("PMT", "checked is " + itemsChecked.length);
         for (int i = 1; i < (friendsLength + 1); i++)
         {
-            Log.e("PMT", "i is " + i);
+            Log.e("PMT", "i is " + i + " and name is: " + mUserFriends.get(i).getUsername());
             items[i - 1] = mUserFriends.get(i).getUsername();
         }
 
@@ -162,7 +162,9 @@ public class MainActivity extends Activity {
                     if (itemsChecked[i]) {
                         // Create our Installation query
                         ParseQuery pushQuery = ParseInstallation.getQuery();
-                        pushQuery.whereEqualTo("user", items[i]);
+                        //pushQuery.whereEqualTo("user", items[i].toString());
+                        //pushQuery.whereEqualTo("user", mUserFriends.get(i + 1).getUsername());
+                        pushQuery.whereEqualTo("user", mUserFriends.get(i + 1));
 
                         // Send push notification to query
                         ParsePush push = new ParsePush();
