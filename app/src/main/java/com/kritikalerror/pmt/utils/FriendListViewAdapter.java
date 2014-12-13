@@ -82,7 +82,7 @@ public class FriendListViewAdapter extends BaseAdapter {
             if (convertView == null || !(convertView instanceof AdView)) {
                 AdView adView = new AdView(this.context);
                 adView.setAdSize(AdSize.BANNER);
-                adView.setAdUnitId("ca-app-pub-6309606968767978/2177105243");
+                adView.setAdUnitId(ADMOB_PUBLISHER_ID);
                 AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
 
                 for (int i = 0; i < adView.getChildCount(); i++) {
@@ -112,7 +112,6 @@ public class FriendListViewAdapter extends BaseAdapter {
                 convertView.setTag(holder);
 
                 // Generate some nice backgrounds per user
-                //convertView.setBackgroundColor(colorPicker[randInt(0, 5)]);
                 convertView.setBackgroundColor(determineColor());
                 Log.e("PMTFA", "crashes in convertview");
             } else {
@@ -126,19 +125,10 @@ public class FriendListViewAdapter extends BaseAdapter {
         return convertView;
     }
 
-    public static int randInt(int min, int max) {
-
-        // NOTE: Usually this should be a field rather than a method
-        // variable so that it is not re-seeded every call.
-        Random rand = new Random();
-
-        // nextInt is normally exclusive of the top value,
-        // so add 1 to make it inclusive
-        int randomNum = rand.nextInt((max - min) + 1) + min;
-
-        return randomNum;
-    }
-
+    /**
+     * Function to pick color in sequential order based on the boolean
+     * @return
+     */
     public static int determineColor()
     {
         for (int i = 0; i < colorUsage.length; i++)

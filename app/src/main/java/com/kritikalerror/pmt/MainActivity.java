@@ -54,19 +54,15 @@ public class MainActivity extends Activity {
     private ParseUser mCurrentUser;
     private List<ParseUser> mUserFriends;
     private FriendListViewAdapter mFriendAdapter;
-    private AdView mAdView;
-    private RelativeLayout mLayout;
     private Comparator<ParseUser> mComparator = new UserComparator();
     private SharedPreferences mSharedPreferences;
-    private Map<String, String> mGroupMap = new HashMap<String, String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mLayout = new RelativeLayout(this);
-        ParseAnalytics.trackAppOpened(getIntent());
+         ParseAnalytics.trackAppOpened(getIntent());
 
         isUserAuthenticated();
         if (mCurrentUser != null)
@@ -119,15 +115,15 @@ public class MainActivity extends Activity {
     private void pmtGroup()
     {
         final ArrayList<String> pmtSend = new ArrayList<String>();
-        int friendsLength = mUserFriends.size();
+        int friendsLength = mUserFriends.size() - 1;
         final CharSequence[] items = new CharSequence[friendsLength];
         final boolean[] itemsChecked = new boolean[items.length];
         Log.e("PMT", "length is " + items.length);
         Log.e("PMT", "checked is " + itemsChecked.length);
-        for (int i = 0; i < friendsLength; i++)
+        for (int i = 1; i < (friendsLength + 1); i++)
         {
             Log.e("PMT", "i is " + i);
-            items[i] = mUserFriends.get(i).getUsername();
+            items[i - 1] = mUserFriends.get(i).getUsername();
         }
 
         //TODO: initializing all to false for now, discard later
@@ -140,8 +136,14 @@ public class MainActivity extends Activity {
         SharedPreferences.Editor keyValuesEditor = mSharedPreferences.edit();
 
         // Transfer current friend list to group list
+        boolean pass = true;
         for (ParseUser friendObject : mUserFriends)
         {
+            if (pass)
+            {
+                pass = false;
+                continue;
+            }
             //mGroupMap.put(friendObject.getUsername(), "false");
             if (!mSharedPreferences.contains(friendObject.getUsername()))
             {
@@ -160,19 +162,29 @@ public class MainActivity extends Activity {
                     if (itemsChecked[i]) {
                         // Create our Installation query
                         ParseQuery pushQuery = ParseInstallation.getQuery();
-                        pushQuery.whereEqualTo("user", mUserFriends.get(i));
+                        pushQuery.whereEqualTo("user", items[i]);
 
                         // Send push notification to query
                         ParsePush push = new ParsePush();
                         push.setQuery(pushQuery); // Set our Installation query
                         push.setMessage(mCurrentUser.getUsername() + " wants PMT");
                         push.sendInBackground();
+                        // For debugging only
+                        /*
+                        try {
+                            push.send();
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                        */
 
-                        Toast.makeText(MainActivity.this, "Sent the group a PMT", Toast.LENGTH_SHORT).show();
+                        Log.e("PMTGROUP", "Sent a PMT to: " + items[i]);
 
                         itemsChecked[i] = false;
                     }
                 }
+
+                Toast.makeText(MainActivity.this, "Sent the group a PMT", Toast.LENGTH_SHORT).show();
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
