@@ -23,6 +23,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -62,13 +64,21 @@ public class MainActivity extends Activity {
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-         ParseAnalytics.trackAppOpened(getIntent());
+        ParseAnalytics.trackAppOpened(getIntent());
 
         isUserAuthenticated();
         if (mCurrentUser != null)
         {
-            registerPushNotification();
-            loadFriendList();
+            if(isConnected()) {
+                Log.e("CONNECTION", "Is Connected!");
+                registerPushNotification();
+                loadFriendList();
+            }
+            else
+            {
+                Log.e("CONNECTION", "Is Not Connected!");
+                showConnectionAlertToUser();
+            }
         }
     }
 
@@ -86,14 +96,35 @@ public class MainActivity extends Activity {
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.add_group:
-                pmtGroup();
+                if (isConnected())
+                {
+                    pmtGroup();
+                }
+                else
+                {
+                    showConnectionAlertToUser();
+                }
                 return true;
             case R.id.add_user:
-                addFriend();
+                if (isConnected())
+                {
+                    addFriend();
+                }
+                else
+                {
+                    showConnectionAlertToUser();
+                }
                 return true;
             case R.id.settings:
-                ParseUser.logOut();
-                isUserAuthenticated();
+                if (isConnected())
+                {
+                    ParseUser.logOut();
+                    isUserAuthenticated();
+                }
+                else
+                {
+                    showConnectionAlertToUser();
+                }
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -162,8 +193,6 @@ public class MainActivity extends Activity {
                     if (itemsChecked[i]) {
                         // Create our Installation query
                         ParseQuery pushQuery = ParseInstallation.getQuery();
-                        //pushQuery.whereEqualTo("user", items[i].toString());
-                        //pushQuery.whereEqualTo("user", mUserFriends.get(i + 1).getUsername());
                         pushQuery.whereEqualTo("user", mUserFriends.get(i + 1));
 
                         // Send push notification to query
@@ -171,14 +200,6 @@ public class MainActivity extends Activity {
                         push.setQuery(pushQuery); // Set our Installation query
                         push.setMessage(mCurrentUser.getUsername() + " wants PMT");
                         push.sendInBackground();
-                        // For debugging only
-                        /*
-                        try {
-                            push.send();
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
-                        */
 
                         Log.e("PMTGROUP", "Sent a PMT to: " + items[i]);
 
@@ -323,43 +344,57 @@ public class MainActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
-                // Create our Installation query
-                ParseQuery pushQuery = ParseInstallation.getQuery();
-                pushQuery.whereEqualTo("user", mUserFriends.get(position));
+                if (isConnected())
+                {
+                    // Create our Installation query
+                    ParseQuery pushQuery = ParseInstallation.getQuery();
+                    pushQuery.whereEqualTo("user", mUserFriends.get(position));
 
-                // Send push notification to query
-                ParsePush push = new ParsePush();
-                push.setQuery(pushQuery); // Set our Installation query
-                push.setMessage(mCurrentUser.getUsername() + " wants PMT");
-                push.sendInBackground();
+                    // Send push notification to query
+                    ParsePush push = new ParsePush();
+                    push.setQuery(pushQuery); // Set our Installation query
+                    push.setMessage(mCurrentUser.getUsername() + " wants PMT");
+                    push.sendInBackground();
 
-                Toast.makeText(MainActivity.this, "Sent a PMT", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Sent a PMT", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    showConnectionAlertToUser();
+                }
             }
         });
 
         listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 // TODO Auto-generated method stub
-                final ParseUser selectedUser = (ParseUser) parent.getItemAtPosition(position);
+                if (isConnected())
+                {
+                    final ParseUser selectedUser = (ParseUser) parent.getItemAtPosition(position);
 
-                final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("Options")
-                        .setItems(new CharSequence[]{"Delete"},
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        switch (which) {
-                                            case 0:
-                                                deleteFriend(selectedUser);
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Options")
+                            .setItems(new CharSequence[]{"Delete"},
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            switch (which) {
+                                                case 0:
+                                                    deleteFriend(selectedUser);
 
-                                                Toast.makeText(MainActivity.this, "Deleted " + selectedUser.getUsername(), Toast.LENGTH_SHORT).show();
-                                                break;
-                                            default:
-                                                break;
+                                                    Toast.makeText(MainActivity.this, "Deleted " + selectedUser.getUsername(), Toast.LENGTH_SHORT).show();
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
                                         }
-                                    }
-                                });
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
+                                    });
+                    AlertDialog alertDialog = builder.create();
+                    alertDialog.show();
+                }
+                else
+                {
+                    showConnectionAlertToUser();
+                }
 
                 return false;
             }
@@ -395,6 +430,39 @@ public class MainActivity extends Activity {
         ParseInstallation installation = ParseInstallation.getCurrentInstallation();
         installation.put("user", mCurrentUser);
         installation.saveInBackground();
+    }
+
+    public boolean isConnected()
+    {
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo wifiCheck = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        NetworkInfo dataCheck = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        return wifiCheck.isConnected() || dataCheck.isConnected();
+    }
+
+    public void showConnectionAlertToUser() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+
+        alertDialogBuilder.setPositiveButton("Enable Data",
+            new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int id){
+                    Intent settingsIntent = new Intent(android.provider.Settings.ACTION_DATA_ROAMING_SETTINGS);
+                    startActivity(settingsIntent);
+                }
+            });
+        alertDialogBuilder.setNeutralButton("Enable WiFi",
+            new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int id){
+                    Intent settingsIntent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
+                    startActivity(settingsIntent);
+                }
+            });
+        alertDialogBuilder.setNegativeButton("Cancel",
+            new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int id){
+                    dialog.cancel();
+                }
+            });
     }
 
 
