@@ -83,6 +83,26 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume()
+    {
+        super.onResume();
+        isUserAuthenticated();
+        if (mCurrentUser != null)
+        {
+            if(isConnected()) {
+                Log.e("CONNECTION", "Is Connected!");
+                registerPushNotification();
+                loadFriendList();
+            }
+            else
+            {
+                Log.e("CONNECTION", "Is Not Connected!");
+                showConnectionAlertToUser();
+            }
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
         MenuInflater inflater = getMenuInflater();
@@ -442,7 +462,7 @@ public class MainActivity extends Activity {
 
     public void showConnectionAlertToUser() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-
+        alertDialogBuilder.setMessage("Internet Connectivity is currently disabled. This app needs the internet to function properly. Please check your connection.");
         alertDialogBuilder.setPositiveButton("Enable Data",
             new DialogInterface.OnClickListener(){
                 public void onClick(DialogInterface dialog, int id){
@@ -463,6 +483,8 @@ public class MainActivity extends Activity {
                     dialog.cancel();
                 }
             });
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
     }
 
 
