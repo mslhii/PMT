@@ -47,7 +47,7 @@ public class FriendListViewAdapter extends BaseAdapter {
     private Context context;
     private int mLength;
 
-    private static final String ADMOB_PUBLISHER_ID = "ca-app-pub-6309606968767978/2177105243";
+    private static final String ADMOB_PUBLISHER_ID = "ca-app-pub-6309606968767978/8492050042";
 
     public FriendListViewAdapter(Context ctx, List<ParseUser> parseUsers) {
         this.context = ctx;
