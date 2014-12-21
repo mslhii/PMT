@@ -10,3 +10,5 @@ Version 1.0
 
 Version 2.0 (in progress?)
 - User profiles
+- Better ad targeting?
+- Better UI
