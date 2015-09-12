@@ -14,3 +14,4 @@ Version 2.0 (in progress?)
 - Better UI
 - Better user signups?
 - Delete a user?
+- Account recovery?
