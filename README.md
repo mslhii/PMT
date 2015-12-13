@@ -15,3 +15,5 @@ Version 2.0 (stopped?)
 - Better user signups?
 - Delete a user?
 - Account recovery?
+
+Project is stopped
