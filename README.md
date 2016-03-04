@@ -17,4 +17,4 @@ Version 2.0 (stopped?)
 - Account recovery?
 
 Project is stopped <br/>
-https://play.google.com/store/apps/details?id=com.kritikalerror.pmt
+Download at https://play.google.com/store/apps/details?id=com.kritikalerror.pmt
