@@ -16,5 +16,6 @@ Version 2.0 (stopped?)
 - Delete a user?
 - Account recovery?
 
-Project is stopped <br/>
+Project is stopped.
+<br/>
 Download at: https://play.google.com/store/apps/details?id=com.kritikalerror.pmt
