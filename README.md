@@ -8,7 +8,7 @@ Version 1.0
 - Group push notification sending
 - Add/delete user
 
-Version 2.0 (stopped?)
+Version 2.0 (stopped)
 - User profiles
 - Better ad targeting?
 - Better UI
