@@ -16,6 +16,6 @@ Version 2.0 (stopped)
 - Delete a user?
 - Account recovery?
 
-Development has been stopped forever because Parse is shutting down. See more at: <br/> http://blog.parse.com/announcements/moving-on/
+No more because Parse is shutting down. See more at: <br/> http://blog.parse.com/announcements/moving-on/
 <br/>
 Download at: https://play.google.com/store/apps/details?id=com.kritikalerror.pmt
